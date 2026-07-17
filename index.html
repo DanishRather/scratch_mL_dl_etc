@@ -1,43 +1,137 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KNN Visualization</title>
+  <title>KNN &mdash; Interactive Visualization</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <h1>K-Nearest Neighbors</h1>
-    <p class="subtitle">Click on the canvas to place a query point and see the KNN prediction</p>
-
-    <div class="canvas-wrapper">
-      <canvas id="canvas" width="600" height="500"></canvas>
-    </div>
-
-    <div class="controls">
-      <div class="control-group">
-        <label for="kSlider">K = <span id="kValue">5</span></label>
-        <input type="range" id="kSlider" min="1" max="20" value="5">
+  <div class="app">
+    <header>
+      <div class="header-left">
+        <h1>K<span>NN</span></h1>
+        <p class="subtitle">K-Nearest Neighbors &middot; Interactive Visualizer</p>
       </div>
-      <div class="control-group">
-        <button id="randomBtn">New Random Data</button>
-        <button id="clearQueryBtn">Clear Query</button>
-        <button id="clearAllBtn">Clear All</button>
+      <div class="header-actions">
+        <button class="theme-toggle" id="themeToggle" title="Toggle theme" aria-label="Toggle theme">&#9790;</button>
       </div>
-    </div>
+    </header>
 
-    <div class="legend">
-      <span><span class="dot class-a"></span> Class A</span>
-      <span><span class="dot class-b"></span> Class B</span>
-      <span><span class="dot query-dot"></span> Query Point</span>
-    </div>
+    <div class="main-row">
+      <!-- ===== Left Panel: Variables ===== -->
+      <div class="panel panel-left">
+        <div class="panel-title">Variables &amp; State</div>
+        <div id="variablesContainer"></div>
+        <div class="panel-footer" id="leftPanelFooter"></div>
+      </div>
 
-    <div class="info" id="info">
-      <span id="pointCount">Class A: 0 &nbsp;|&nbsp; Class B: 0</span>
-      <span id="prediction">No query point placed</span>
+      <!-- ===== Center: Canvas + Controls ===== -->
+      <div class="center-col">
+        <div class="canvas-wrapper">
+          <canvas id="canvas" width="450" height="380"></canvas>
+          <div id="tooltip"></div>
+        </div>
+
+        <div class="controls">
+          <div class="control-group">
+            <label for="kSlider">K = <span id="kValue">5</span></label>
+            <input type="range" id="kSlider" min="1" max="20" value="5">
+            <span id="biasBadge"></span>
+          </div>
+          <div class="control-group">
+            <select id="metricSelect">
+              <option value="euclidean">Euclidean</option>
+              <option value="manhattan">Manhattan</option>
+              <option value="minkowski">Minkowski</option>
+            </select>
+            <input type="number" id="minkowskiP" min="1" max="10" value="3" step="0.5" title="Minkowski p-value" style="width:44px;display:none;padding:4px;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-size:11px;">
+          </div>
+        </div>
+
+        <div class="controls">
+          <div class="control-group">
+            <select id="patternSelect">
+              <option value="random">Random</option>
+              <option value="linear">Linearly Separable</option>
+              <option value="circles">Concentric Circles</option>
+              <option value="xor">XOR Pattern</option>
+              <option value="moons">Moons</option>
+            </select>
+            <button id="randomBtn">Generate</button>
+            <button id="clearQueryBtn" class="btn-warning">Clear Query</button>
+            <button id="clearAllBtn" class="btn-danger">Clear All</button>
+          </div>
+          <div class="control-group" id="addModeGroup">
+            <span class="mode-label">Mode:</span>
+            <button id="modeClassify" class="mode-btn active" data-mode="classify">Classify</button>
+            <button id="modeAddA" class="mode-btn" data-mode="addA">+A</button>
+            <button id="modeAddB" class="mode-btn" data-mode="addB">+B</button>
+          </div>
+        </div>
+
+        <div class="controls">
+          <div class="control-group">
+            <label class="toggle-label">
+              <input type="checkbox" id="boundaryToggle">
+              <span class="toggle-text">Decision Boundary</span>
+            </label>
+          </div>
+          <div class="control-group">
+            <button id="explainBtn">Explain Step 0/4</button>
+            <button id="downloadBtn" class="btn-accent" title="Download snapshot as PNG">&#9650; Export</button>
+          </div>
+        </div>
+
+        <div class="legend">
+          <span><span class="dot class-a"></span> Class A</span>
+          <span><span class="dot class-b"></span> Class B</span>
+          <span><span class="dot query-dot"></span> Query Point</span>
+        </div>
+
+        <div class="info">
+          <span id="pointCount">A: 0 &nbsp;&#8226;&nbsp; B: 0</span>
+          <span id="prediction">Click canvas to place query</span>
+        </div>
+
+        <div id="explainBox" class="explain-box" style="display:none;"></div>
+
+        <div class="warnings" id="warnings"></div>
+
+        <details class="how-it-works">
+          <summary>How KNN Works</summary>
+          <p>K-Nearest Neighbors (KNN) is a simple algorithm that classifies a new point by looking at the <em>K</em> closest labeled points in the dataset. It measures the distance (using the selected metric) from the query to every training point, picks the <em>K</em> nearest, and assigns the class that appears most often among them. Larger K reduces noise but can blur decision boundaries; smaller K captures local patterns but may overfit.</p>
+        </details>
+      </div>
+
+      <!-- ===== Right Panel: Results ===== -->
+      <div class="panel panel-right">
+        <div class="panel-title">Results</div>
+
+        <div class="panel-section">
+          <div class="panel-subtitle">Neighbors</div>
+          <div id="neighborMatrixContainer"></div>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-subtitle">Confusion Matrix (Leave-One-Out)</div>
+          <div id="confusionMatrixContainer"></div>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-subtitle">K vs Accuracy</div>
+          <div class="chart-wrapper">
+            <canvas id="accChart" width="220" height="110"></canvas>
+          </div>
+          <div class="chart-caption">Optimal K balances bias and variance</div>
+        </div>
+
+        <div class="panel-footer" id="rightPanelFooter"></div>
+      </div>
     </div>
   </div>
+
+  <div id="firstTip" class="first-tip">Tip: use <kbd>+</kbd>/<kbd>-</kbd> to change K, <kbd>N</kbd> new data, <kbd>T</kbd> toggle theme</div>
 
   <script src="script.js"></script>
 </body>
