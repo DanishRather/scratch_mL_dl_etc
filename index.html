@@ -3,22 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Todo App</title>
+  <title>KNN Visualization</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="container">
-    <h1>📋 Todo</h1>
-    <div class="input-group">
-      <input type="text" id="todoInput" placeholder="Add a new task..." autofocus>
-      <button id="addBtn">Add</button>
+    <h1>K-Nearest Neighbors</h1>
+    <p class="subtitle">Click on the canvas to place a query point and see the KNN prediction</p>
+
+    <div class="canvas-wrapper">
+      <canvas id="canvas" width="600" height="500"></canvas>
     </div>
-    <ul class="todo-list" id="todoList">
-      <li class="empty-msg">No tasks yet. Add one above!</li>
-    </ul>
-    <div class="stats">
-      <span id="taskCount">0 tasks</span>
-      <button class="clear-btn" id="clearBtn">Clear All</button>
+
+    <div class="controls">
+      <div class="control-group">
+        <label for="kSlider">K = <span id="kValue">5</span></label>
+        <input type="range" id="kSlider" min="1" max="20" value="5">
+      </div>
+      <div class="control-group">
+        <button id="randomBtn">New Random Data</button>
+        <button id="clearQueryBtn">Clear Query</button>
+        <button id="clearAllBtn">Clear All</button>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span><span class="dot class-a"></span> Class A</span>
+      <span><span class="dot class-b"></span> Class B</span>
+      <span><span class="dot query-dot"></span> Query Point</span>
+    </div>
+
+    <div class="info" id="info">
+      <span id="pointCount">Class A: 0 &nbsp;|&nbsp; Class B: 0</span>
+      <span id="prediction">No query point placed</span>
     </div>
   </div>
 
