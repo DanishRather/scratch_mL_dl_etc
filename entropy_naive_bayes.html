@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Entropy &amp; Naive Bayes &mdash; Interactive Visualization</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root,[data-theme="dark"] {
+  --bg:#080c18; --surface:#111622; --surface2:#1a2032; --surface3:#222a40;
+  --border:#283048; --text:#e2e8f0; --text2:#94a3b8; --text3:#64748b;
+  --classA:#ff6b6b; --classAB:#e05555; --classAG:rgba(255,107,107,0.35);
+  --classB:#4fc3f7; --classBB:#3aa8d8; --classBG:rgba(79,195,247,0.35);
+  --query:#69f0ae; --queryG:rgba(105,240,174,0.5);
+  --accent:#7c5cfc; --accent2:#6a4be0; --success:#2dd4a0; --danger:#f87171;
+  --warn:#fbbf24; --info:#60a5fa; --shadow:rgba(0,0,0,0.5);
+  --cbg:#0f1625; --cborder:#283048;
+}
+[data-theme="light"] {
+  --bg:#f0f2f7; --surface:#fff; --surface2:#f4f6fb; --surface3:#e8ecf4;
+  --border:#d0d6e0; --text:#161b2e; --text2:#4a5570; --text3:#8892b0;
+  --classA:#e05252; --classAB:#c04040; --classAG:rgba(224,82,82,0.2);
+  --classB:#3498db; --classBB:#2980b9; --classBG:rgba(52,152,219,0.2);
+  --query:#27ae60; --queryG:rgba(39,174,96,0.3);
+  --accent:#6c4ce0; --accent2:#5a3dc4; --success:#2db488; --danger:#e05252;
+  --warn:#d4a017; --info:#4a90d9; --shadow:rgba(0,0,0,0.08);
+  --cbg:#fafbff; --cborder:#d0d6e0;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .35s,color .35s}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:0 0}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.app{display:flex;flex-direction:column;min-height:100vh;padding:14px 18px;animation:fadeIn .5s both}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+header{display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;margin-bottom:10px;border-bottom:1px solid var(--border)}
+.hl{display:flex;flex-direction:column}
+header h1{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;letter-spacing:-.3px}
+header h1 span{color:var(--accent)}
+header .sub{font-size:11px;color:var(--text3);margin-top:1px}
+.ha{display:flex;align-items:center;gap:10px}
+
+.toggle{width:36px;height:36px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .25s}
+.toggle:hover{background:var(--surface2);border-color:var(--accent);color:var(--accent);transform:rotate(15deg)}
+
+.row{display:grid;grid-template-columns:1.2fr 1.8fr 1.2fr;gap:14px;flex:1;min-height:0}
+
+.panel{background:var(--surface);border-radius:12px;padding:14px;border:1px solid var(--border);box-shadow:0 4px 20px var(--shadow);display:flex;flex-direction:column;animation:slide .45s both}
+@keyframes slide{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.pn:nth-child(1){animation-delay:.05s}
+.pn:nth-child(2){animation-delay:.1s}
+.pn:nth-child(3){animation-delay:.15s}
+.pl{overflow-y:auto;gap:4px}
+.pr{overflow-y:auto}
+
+.pt{font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.7px;flex-shrink:0}
+.pf{margin-top:auto;padding-top:6px;font-size:9px;color:var(--text3);text-align:center;border-top:1px solid var(--border)}
+
+.cc{flex:1;display:flex;flex-direction:column;align-items:center;min-width:0}
+.cw{display:flex;justify-content:center;margin-bottom:6px;width:100%;position:relative;flex-shrink:0}
+#canvas{border:1.5px solid var(--cborder);border-radius:10px;cursor:crosshair;background:var(--cbg);display:block;max-width:100%;height:auto;box-shadow:0 4px 18px var(--shadow)}
+
+.ctrls{display:flex;justify-content:center;gap:12px;margin-bottom:5px;flex-wrap:wrap;width:100%;flex-shrink:0}
+.cg{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.cg label{font-size:11px;font-weight:600;color:var(--text2)}
+.cg input[type=range]{width:90px;height:4px;accent-color:var(--accent);cursor:pointer}
+.cg select{padding:4px 7px;background:var(--surface2);color:var(--text2);border:1px solid var(--border);border-radius:7px;font-size:10px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif}
+.cg select:hover{border-color:var(--accent);color:var(--text)}
+.cg button{padding:4px 10px;background:var(--surface2);color:var(--text2);border:1px solid var(--border);border-radius:7px;font-size:10px;font-weight:500;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+.cg button:hover{background:var(--surface3);border-color:var(--accent);color:var(--text);transform:translateY(-1px);box-shadow:0 2px 6px var(--shadow)}
+.cg button.danger{border-color:var(--danger);color:var(--danger)}
+.cg button.danger:hover{background:rgba(248,113,113,.1)}
+.cg button.accent{border-color:var(--accent);color:var(--accent)}
+.cg button.accent:hover{background:rgba(124,92,252,.12)}
+
+#tooltip{position:fixed;pointer-events:none;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:5px 9px;font-size:10px;font-weight:500;color:var(--text);box-shadow:0 4px 14px var(--shadow);opacity:0;transform:translateY(4px);transition:opacity .15s,transform .15s;z-index:100;white-space:nowrap}
+#tooltip.v{opacity:1;transform:translateY(0)}
+
+.legend{display:flex;justify-content:center;gap:16px;margin-bottom:4px;font-size:10px;color:var(--text3);flex-shrink:0}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;vertical-align:middle;margin-right:3px}
+.dot.a{background:var(--classA);box-shadow:0 0 5px var(--classAG)}
+.dot.b{background:var(--classB);box-shadow:0 0 5px var(--classBG)}
+.dot.q{background:var(--query);box-shadow:0 0 7px var(--queryG);width:11px;height:11px}
+
+.info{display:flex;justify-content:space-between;padding:5px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:10px;color:var(--text2);font-weight:500;width:100%;max-width:450px;margin-bottom:4px;flex-shrink:0}
+#prediction{font-weight:700}
+#prediction.ca{color:var(--classA)}
+#prediction.cb{color:var(--classB)}
+#prediction.t{color:var(--text3)}
+
+.sec{margin-bottom:8px}
+.sec:last-child{margin-bottom:0}
+.st{font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+
+.eq{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text);padding:4px 6px;background:var(--surface2);border-radius:5px;margin:3px 0;line-height:1.5;transition:background .35s}
+.eq .hl{color:var(--accent)}
+
+.stat{display:flex;justify-content:space-between;padding:3px 5px;font-size:10px;border-bottom:1px solid var(--border)}
+.stat:last-child{border-bottom:none}
+.stat .l{color:var(--text3)}
+.stat .v{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:10px}
+.stat .v.ca{color:var(--classA)}
+.stat .v.cb{color:var(--classB)}
+.stat .v.ig{color:var(--accent)}
+.stat .v.mx{color:var(--warn)}
+
+.bar{display:flex;height:14px;border-radius:4px;overflow:hidden;margin:4px 0;border:1px solid var(--border)}
+.bar .ba{background:var(--classA);transition:width .35s}
+.bar .bb{background:var(--classB);transition:width .35s}
+.bar-label{display:flex;justify-content:space-between;font-size:8px;color:var(--text3);margin-bottom:2px}
+
+.ent-canvas-wrap{display:flex;justify-content:center;margin:4px 0}
+#entCanvas{display:block;border-radius:6px;background:var(--surface2);width:100%;max-width:200px;height:auto}
+
+.ig-meter{height:6px;border-radius:3px;background:var(--surface3);overflow:hidden;margin:4px 0}
+.ig-fill{height:100%;border-radius:3px;background:var(--accent);transition:width .4s}
+
+.feat-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px}
+.feat{font-size:8.5px;padding:3px 5px;background:var(--surface2);border-radius:4px;color:var(--text3);text-align:center}
+.feat .fv{font-weight:700;color:var(--text);font-family:'JetBrains Mono',monospace}
+
+@media(max-width:900px){
+  .row{grid-template-columns:1fr}
+  .app{padding:10px}
+  header h1{font-size:17px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="hl">
+      <h1>Entropy &amp; <span>Naive Bayes</span></h1>
+      <p class="sub">Information, Uncertainty &amp; Generative Classification</p>
+    </div>
+    <div class="ha">
+      <button class="toggle" id="themeToggle" title="Toggle theme">&#9790;</button>
+    </div>
+  </header>
+
+  <div class="row">
+    <!-- Left: Entropy Theory -->
+    <div class="panel pl pn">
+      <div class="pt">Entropy Theory</div>
+      <div class="sec">
+        <div class="st">Binary Entropy H(p)</div>
+        <div class="eq">H(p) = &minus;p log&#8322;p &minus; (1&minus;p) log&#8322;(1&minus;p)</div>
+        <div class="cg" style="justify-content:center;margin:3px 0">
+          <label for="priorSlider">P(Y=A) = <span id="priorVal">0.50</span></label>
+          <input type="range" id="priorSlider" min="5" max="95" value="50" style="width:100px">
+        </div>
+        <div class="ent-canvas-wrap">
+          <canvas id="entCanvas" width="200" height="100"></canvas>
+        </div>
+        <div id="entropyStats" style="margin-top:2px"></div>
+      </div>
+      <div class="sec">
+        <div class="st">Information Gain</div>
+        <div id="igDisplay">
+          <div class="stat"><span class="l">Prior Entropy H(Y)</span><span class="v" id="priorEntVal">1.000</span></div>
+          <div class="stat"><span class="l">Posterior H(Y|X)</span><span class="v" id="postEntVal">—</span></div>
+          <div class="stat"><span class="l">Info Gain</span><span class="v ig" id="igVal">—</span></div>
+        </div>
+        <div class="ig-meter"><div class="ig-fill" id="igFill" style="width:0%"></div></div>
+        <div style="font-size:8px;color:var(--text3);margin-top:3px;line-height:1.4">
+          <strong>Information Gain</strong> measures entropy reduction after observing features — the core of feature selection for Naive Bayes.
+        </div>
+      </div>
+      <div class="sec">
+        <div class="st">Key Insight</div>
+        <div style="font-size:9.5px;color:var(--text2);line-height:1.5;padding:4px 6px;background:var(--surface2);border-radius:5px">
+          Naive Bayes computes P(Y|X) = P(Y)&prod;P(X<sub>i</sub>|Y).<br>
+          Entropy quantifies <em>uncertainty</em> in class prediction. Lower posterior entropy = more confident classification. Each feature's contribution can be measured via information gain.
+        </div>
+      </div>
+      <div class="pf"></div>
+    </div>
+
+    <!-- Center: Main Canvas -->
+    <div class="cc pn">
+      <div class="cw"><canvas id="canvas" width="450" height="380"></canvas><div id="tooltip"></div></div>
+      <div class="ctrls">
+        <div class="cg">
+          <select id="patternSelect">
+            <option value="random">Random</option>
+            <option value="linear">Linear</option>
+            <option value="circles">Circles</option>
+            <option value="xor">XOR</option>
+            <option value="moons">Moons</option>
+          </select>
+          <button id="genBtn">Generate</button>
+          <button class="danger" id="clearBtn">Clear</button>
+        </div>
+      </div>
+      <div class="ctrls">
+        <div class="cg">
+          <label class="toggle-label" style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:10px;color:var(--text2)">
+            <input type="checkbox" id="boundaryToggle" checked>
+            Decision Boundary
+          </label>
+          <label class="toggle-label" style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:10px;color:var(--text2)">
+            <input type="checkbox" id="contourToggle">
+            Probability Contours
+          </label>
+        </div>
+      </div>
+      <div class="legend">
+        <span><span class="dot a"></span> Class A</span>
+        <span><span class="dot b"></span> Class B</span>
+        <span><span class="dot q"></span> Query</span>
+      </div>
+      <div class="info">
+        <span id="pointCount">A: 0 &bull; B: 0</span>
+        <span id="prediction">Click to place query</span>
+      </div>
+      <div class="sec" style="width:100%;max-width:450px;flex-shrink:0">
+        <details style="font-size:10px;color:var(--text3);line-height:1.5">
+          <summary style="cursor:pointer;font-weight:600;color:var(--text2);padding:2px 0;user-select:none">How Entropy Connects to Naive Bayes</summary>
+          <p style="margin-top:4px">Naive Bayes is a <em>generative</em> classifier: it models P(X|Y) and uses Bayes' rule to compute P(Y|X). Entropy H(Y) = &minus;&Sigma; P(y) log P(y) measures the uncertainty in the class distribution. After observing features X, the posterior entropy H(Y|X) measures remaining uncertainty. The difference is the <em>information gain</em> — how much the features reduce uncertainty. High information gain features are the most discriminative.</p>
+        </details>
+      </div>
+    </div>
+
+    <!-- Right: Metrics & Posteriors -->
+    <div class="panel pr pn">
+      <div class="pt">Information Metrics</div>
+      <div class="sec">
+        <div class="st">Class Posterior</div>
+        <div id="posteriorDisplay">
+          <div class="bar-label"><span>P(A|X)</span><span>P(B|X)</span></div>
+          <div class="bar"><div class="ba" id="postBarA" style="width:50%"></div><div class="bb" id="postBarB" style="width:50%"></div></div>
+          <div id="postVals" style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3)"><span>—</span><span>—</span></div>
+        </div>
+        <div class="stat"><span class="l">Predicted Class</span><span class="v" id="predClass">—</span></div>
+        <div class="stat"><span class="l">Confidence</span><span class="v" id="confidence">—</span></div>
+      </div>
+      <div class="sec">
+        <div class="st">Feature Likelihoods (Gaussian NB)</div>
+        <div id="featureStats" style="font-size:9px;color:var(--text3);line-height:1.5">
+          <div style="padding:4px 0">Click the canvas to compute posteriors and see how each feature contributes to the prediction.</div>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="st">Naive Bayes Decision</div>
+        <div id="nbDecision" style="font-size:9px;color:var(--text2);padding:4px 6px;background:var(--surface2);border-radius:5px;line-height:1.5">
+          P(Y|X) &prop; P(Y) &times; P(X|Y)<br>
+          Decision boundary: P(A|X) = P(B|X) = 0.5
+        </div>
+      </div>
+      <div class="pf"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== DOM ===== */
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const entCanvas = document.getElementById('entCanvas');
+const entCtx = entCanvas.getContext('2d');
+const tooltip = document.getElementById('tooltip');
+const themeToggle = document.getElementById('themeToggle');
+const priorSlider = document.getElementById('priorSlider');
+const priorVal = document.getElementById('priorVal');
+const patternSelect = document.getElementById('patternSelect');
+const genBtn = document.getElementById('genBtn');
+const clearBtn = document.getElementById('clearBtn');
+const boundaryToggle = document.getElementById('boundaryToggle');
+const contourToggle = document.getElementById('contourToggle');
+const pointCount = document.getElementById('pointCount');
+const prediction = document.getElementById('prediction');
+const priorEntVal = document.getElementById('priorEntVal');
+const postEntVal = document.getElementById('postEntVal');
+const igVal = document.getElementById('igVal');
+const igFill = document.getElementById('igFill');
+const postBarA = document.getElementById('postBarA');
+const postBarB = document.getElementById('postBarB');
+const postVals = document.getElementById('postVals');
+const predClass = document.getElementById('predClass');
+const confidence = document.getElementById('confidence');
+const featureStats = document.getElementById('featureStats');
+
+/* ===== Constants ===== */
+const W = canvas.width, H = canvas.height;
+const EW = entCanvas.width, EH = entCanvas.height;
+const PAD = 28, POINT_R = 5, HOVER_R = 10, DRAG_TH = 14;
+
+/* ===== State ===== */
+let classA = [], classB = [];
+let queryPoint = null, isDragging = false, hoveredPoint = null;
+let priorProb = 0.5;
+let showBoundary = true, showContours = false;
+
+let currentTheme = 'dark';
+const COLORS = {
+  dark: { A:'#ff6b6b', AB:'#e05555', AG:'rgba(255,107,107,0.35)', B:'#4fc3f7', BB:'#3aa8d8', BG:'rgba(79,195,247,0.35)', Q:'#69f0ae', QG:'rgba(105,240,174,0.5)', T3:'#64748b' },
+  light: { A:'#e05252', AB:'#c04040', AG:'rgba(224,82,82,0.2)', B:'#3498db', BB:'#2980b9', BG:'rgba(52,152,219,0.2)', Q:'#27ae60', QG:'rgba(39,174,96,0.3)', T3:'#8892b0' }
+};
+
+/* ===== Utils ===== */
+function rand(min, max) { return Math.random() * (max - min) + min; }
+function gaussian(x, mean, std) {
+  if (std < 0.01) std = 0.01;
+  return (1 / (std * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * ((x - mean) / std) ** 2);
+}
+function binaryEntropy(p) {
+  if (p <= 0 || p >= 1) return 0;
+  return -p * Math.log2(p) - (1 - p) * Math.log2(1 - p);
+}
+function dist(p1, p2) { return Math.hypot(p1.x - p2.x, p1.y - p2.y); }
+function getCoords(e) {
+  const r = canvas.getBoundingClientRect();
+  return { x: (e.clientX - r.left) * (canvas.width / r.width), y: (e.clientY - r.top) * (canvas.height / r.height) };
+}
+
+/* ===== Data Gen ===== */
+function noise() { return rand(-10, 10); }
+
+function generatePattern(name) {
+  classA = []; classB = [];
+  const n = 15;
+  switch (name) {
+    case 'linear': {
+      const mid = (W - PAD * 2) / 2 + PAD;
+      for (let i = 0; i < n; i++) { classA.push({ x: rand(PAD, mid - 12) + noise(), y: rand(PAD, H - PAD) + noise() }); classB.push({ x: rand(mid + 12, W - PAD) + noise(), y: rand(PAD, H - PAD) + noise() }); }
+      break;
+    }
+    case 'circles': {
+      const cx = W / 2, cy = H / 2;
+      for (let i = 0; i < n; i++) { const a = rand(0, Math.PI * 2), r = rand(10, 50) + noise() * 0.4; classA.push({ x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) }); }
+      for (let i = 0; i < n; i++) { const a = rand(0, Math.PI * 2), r = rand(90, 140) + noise() * 0.4; classB.push({ x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) }); }
+      break;
+    }
+    case 'xor': {
+      const cx = W / 2, cy = H / 2;
+      for (let i = 0; i < Math.ceil(n / 2); i++) {
+        classA.push({ x: rand(PAD, cx - 8) + noise(), y: rand(PAD, cy - 8) + noise() });
+        classA.push({ x: rand(cx + 8, W - PAD) + noise(), y: rand(cy + 8, H - PAD) + noise() });
+      }
+      for (let i = 0; i < Math.ceil(n / 2); i++) {
+        classB.push({ x: rand(cx + 8, W - PAD) + noise(), y: rand(PAD, cy - 8) + noise() });
+        classB.push({ x: rand(PAD, cx - 8) + noise(), y: rand(cy + 8, H - PAD) + noise() });
+      }
+      break;
+    }
+    case 'moons': {
+      const cx = W / 2, cy = H / 2, r = 60;
+      for (let i = 0; i < n; i++) { const t = rand(0, Math.PI); classA.push({ x: cx + r * Math.cos(t) + noise() * 0.5, y: cy + r * Math.sin(t) + noise() * 0.5 }); }
+      for (let i = 0; i < n; i++) { const t = rand(Math.PI, Math.PI * 2); classB.push({ x: cx + 12 + r * Math.cos(t) + noise() * 0.5, y: cy + 18 + r * Math.sin(t) + noise() * 0.5 }); }
+      break;
+    }
+    default: {
+      for (let i = 0; i < n; i++) { classA.push({ x: rand(PAD, W - PAD), y: rand(PAD, H - PAD) }); classB.push({ x: rand(PAD, W - PAD), y: rand(PAD, H - PAD) }); }
+    }
+  }
+}
+
+/* ===== Naive Bayes ===== */
+function computeClassStats() {
+  function stats(arr) {
+    if (arr.length === 0) return { meanX: 0, meanY: 0, stdX: 1, stdY: 1, n: 0 };
+    const mx = arr.reduce((s, p) => s + p.x, 0) / arr.length;
+    const my = arr.reduce((s, p) => s + p.y, 0) / arr.length;
+    const sx = Math.sqrt(arr.reduce((s, p) => s + (p.x - mx) ** 2, 0) / arr.length) || 1;
+    const sy = Math.sqrt(arr.reduce((s, p) => s + (p.y - my) ** 2, 0) / arr.length) || 1;
+    return { meanX: mx, meanY: my, stdX: sx, stdY: sy, n: arr.length };
+  }
+  return { a: stats(classA), b: stats(classB) };
+}
+
+function nbPosterior(q, stats) {
+  const total = stats.a.n + stats.b.n;
+  if (total === 0) return { pA: 0.5, pB: 0.5 };
+  const priorA = priorProb;
+  const priorB = 1 - priorProb;
+  const likeA = gaussian(q.x, stats.a.meanX, stats.a.stdX) * gaussian(q.y, stats.a.meanY, stats.a.stdY);
+  const likeB = gaussian(q.x, stats.b.meanX, stats.b.stdX) * gaussian(q.y, stats.b.meanY, stats.b.stdY);
+  const evidence = priorA * likeA + priorB * likeB;
+  if (evidence === 0) return { pA: 0.5, pB: 0.5 };
+  let pA = (priorA * likeA) / evidence;
+  let pB = (priorB * likeB) / evidence;
+  if (!isFinite(pA)) pA = 0.5;
+  if (!isFinite(pB)) pB = 0.5;
+  return { pA, pB, likeA, likeB };
+}
+
+/* ===== Draw Entropy Canvas ===== */
+function drawEntropyCurve() {
+  const C = COLORS[currentTheme];
+  entCtx.clearRect(0, 0, EW, EH);
+  const pad = { t: 10, r: 8, b: 16, l: 18 };
+  const pw = EW - pad.l - pad.r, ph = EH - pad.t - pad.b;
+
+  entCtx.strokeStyle = C.T3;
+  entCtx.globalAlpha = 0.2;
+  entCtx.lineWidth = 0.5;
+  entCtx.setLineDash([2, 3]);
+  for (let pct = 0; pct <= 100; pct += 25) {
+    const y = pad.t + (1 - pct / 100) * ph;
+    entCtx.beginPath(); entCtx.moveTo(pad.l, y); entCtx.lineTo(EW - pad.r, y); entCtx.stroke();
+  }
+  entCtx.setLineDash([]);
+  entCtx.globalAlpha = 1;
+
+  entCtx.fillStyle = C.T3;
+  entCtx.font = '6px Inter,sans-serif';
+  entCtx.textAlign = 'right'; entCtx.textBaseline = 'middle';
+  for (let pct = 0; pct <= 100; pct += 25) {
+    entCtx.fillText(pct + '%', pad.l - 2, pad.t + (1 - pct / 100) * ph);
+  }
+  entCtx.textAlign = 'center'; entCtx.textBaseline = 'top';
+  entCtx.fillText('p (Class A)', EW / 2, EH - pad.b + 2);
+
+  const steps = 100;
+  const pVal = priorProb;
+  const curve = [];
+  for (let i = 0; i <= steps; i++) {
+    const p = i / steps;
+    const h = binaryEntropy(p);
+    curve.push({ x: pad.l + (i / steps) * pw, y: pad.t + (1 - h) * ph });
+  }
+
+  entCtx.beginPath();
+  const grad = entCtx.createLinearGradient(0, pad.t, 0, pad.t + ph);
+  grad.addColorStop(0, '#7c5cfc');
+  grad.addColorStop(1, '#4fc3f7');
+  entCtx.strokeStyle = grad;
+  entCtx.lineWidth = 2;
+  for (let i = 0; i < curve.length; i++) {
+    i === 0 ? entCtx.moveTo(curve[i].x, curve[i].y) : entCtx.lineTo(curve[i].x, curve[i].y);
+  }
+  entCtx.stroke();
+
+  const px = pad.l + pVal * pw;
+  const hVal = binaryEntropy(pVal);
+  const py = pad.t + (1 - hVal) * ph;
+
+  entCtx.beginPath();
+  entCtx.arc(px, py, 5, 0, Math.PI * 2);
+  entCtx.fillStyle = '#fff';
+  entCtx.fill();
+  entCtx.strokeStyle = '#7c5cfc';
+  entCtx.lineWidth = 2.5;
+  entCtx.stroke();
+
+  entCtx.setLineDash([3, 3]);
+  entCtx.strokeStyle = 'rgba(255,255,255,0.3)';
+  entCtx.lineWidth = 0.8;
+  entCtx.beginPath(); entCtx.moveTo(px, py); entCtx.lineTo(px, EH - pad.b); entCtx.stroke();
+  entCtx.beginPath(); entCtx.moveTo(px, py); entCtx.lineTo(pad.l, py); entCtx.stroke();
+  entCtx.setLineDash([]);
+
+  entCtx.fillStyle = 'rgba(124,92,252,0.15)';
+  entCtx.beginPath();
+  entCtx.moveTo(pad.l, pad.t + ph);
+  for (let i = 0; i <= steps; i++) {
+    const p = i / steps;
+    const h = binaryEntropy(p);
+    const xx = pad.l + (i / steps) * pw;
+    const yy = pad.t + (1 - h) * ph;
+    i === 0 ? entCtx.moveTo(xx, yy) : entCtx.lineTo(xx, yy);
+  }
+  entCtx.lineTo(pad.l + pw, pad.t + ph);
+  entCtx.closePath();
+  entCtx.fill();
+
+  const hDisplay = hVal.toFixed(3);
+  document.getElementById('entropyStats').innerHTML = `
+    <div class="stat"><span class="l">p = ${pVal.toFixed(2)}</span><span class="v mx">H = ${hDisplay} bits</span></div>
+    <div style="font-size:8px;color:var(--text3);padding:2px 5px;line-height:1.4">
+      ${hVal < 0.01 ? 'Certainty (no uncertainty)' : hVal > 0.99 ? 'Maximum uncertainty (coin flip)' : hVal > 0.7 ? 'High uncertainty' : 'Moderate uncertainty'}
+    </div>
+  `;
+  priorEntVal.textContent = hDisplay;
+}
+
+/* ===== Draw Main Canvas ===== */
+function draw() {
+  const C = COLORS[currentTheme];
+  ctx.clearRect(0, 0, W, H);
+  const total = classA.length + classB.length;
+
+  if (total === 0) {
+    ctx.fillStyle = 'rgba(255,255,255,0.04)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.font = '12px Inter,sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('No training data', W / 2, H / 2 - 6);
+    ctx.fillText('Click "Generate" to begin', W / 2, H / 2 + 10);
+    pointCount.textContent = 'A: 0 \u2022 B: 0';
+    prediction.textContent = 'No data';
+    updateMetrics(null);
+    return;
+  }
+
+  const stats = computeClassStats();
+
+  /* Decision boundary */
+  if (showBoundary) {
+    const step = 5;
+    for (let x = 0; x < W; x += step) {
+      for (let y = 0; y < H; y += step) {
+        const { pA } = nbPosterior({ x, y }, stats);
+        if (showContours) {
+          ctx.fillStyle = pA > 0.9 ? C.A : pA > 0.7 ? C.A : pA > 0.5 ? C.A : pA > 0.3 ? C.B : pA > 0.1 ? C.B : C.B;
+          ctx.globalAlpha = pA > 0.9 ? 0.25 : pA > 0.7 ? 0.16 : pA > 0.5 ? 0.08 : pA > 0.3 ? 0.08 : pA > 0.1 ? 0.16 : 0.25;
+        } else {
+          ctx.fillStyle = pA >= 0.5 ? C.A : C.B;
+          ctx.globalAlpha = 0.1;
+        }
+        ctx.fillRect(x, y, step, step);
+      }
+    }
+    ctx.globalAlpha = 1;
+
+    /* Boundary contour line */
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    let started = false;
+    for (let x = 0; x < W; x += 2) {
+      for (let y = 0; y < H; y += 2) {
+        const { pA } = nbPosterior({ x, y }, stats);
+        if (Math.abs(pA - 0.5) < 0.02) {
+          if (!started) { ctx.moveTo(x, y); started = true; }
+          else ctx.lineTo(x, y);
+        }
+      }
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  /* Points */
+  for (const p of classA) {
+    ctx.beginPath(); ctx.arc(p.x, p.y, POINT_R, 0, Math.PI * 2);
+    ctx.fillStyle = C.A; ctx.fill(); ctx.strokeStyle = C.AB; ctx.lineWidth = 1; ctx.stroke();
+  }
+  for (const p of classB) {
+    ctx.beginPath(); ctx.arc(p.x, p.y, POINT_R, 0, Math.PI * 2);
+    ctx.fillStyle = C.B; ctx.fill(); ctx.strokeStyle = C.BB; ctx.lineWidth = 1; ctx.stroke();
+  }
+
+  /* Query point */
+  if (queryPoint && total > 0) {
+    const { pA, pB, likeA, likeB } = nbPosterior(queryPoint, stats);
+    const gaussA = gaussian(queryPoint.x, stats.a.meanX, stats.a.stdX) * gaussian(queryPoint.y, stats.a.meanY, stats.a.stdY);
+    const gaussB = gaussian(queryPoint.x, stats.b.meanX, stats.b.stdX) * gaussian(queryPoint.y, stats.b.meanY, stats.b.stdY);
+    const predicted = pA >= 0.5 ? 'A' : 'B';
+    const conf = Math.max(pA, pB);
+
+    /* Query diamond */
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(queryPoint.x, queryPoint.y - 10);
+    ctx.lineTo(queryPoint.x + 7, queryPoint.y);
+    ctx.lineTo(queryPoint.x, queryPoint.y + 10);
+    ctx.lineTo(queryPoint.x - 7, queryPoint.y);
+    ctx.closePath();
+    ctx.shadowColor = C.QG; ctx.shadowBlur = 16;
+    ctx.fillStyle = C.Q; ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1.2; ctx.stroke();
+    ctx.restore();
+
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 9px Inter,sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(predicted, queryPoint.x, queryPoint.y);
+
+    /* Update metrics */
+    updateMetrics({ pA, pB, predicted, conf, likeA, likeB, gaussA, gaussB, stats });
+
+    pointCount.textContent = `A: ${classA.length}  \u2022  B: ${classB.length}  \u2022  Total: ${total}`;
+    prediction.textContent = `Pred: Class ${predicted} (${(conf * 100).toFixed(0)}% confidence)`;
+    prediction.className = predicted === 'A' ? 'ca' : 'cb';
+
+    /* Show likelihood info near query point */
+    ctx.font = '7px JetBrains Mono,monospace';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+    ctx.fillStyle = C.A;
+    ctx.fillText(`L(A)=${(likeA || 0).toExponential(2)}`, queryPoint.x + 12, queryPoint.y - 4);
+    ctx.fillStyle = C.B;
+    ctx.fillText(`L(B)=${(likeB || 0).toExponential(2)}`, queryPoint.x + 12, queryPoint.y + 8);
+  } else {
+    pointCount.textContent = `A: ${classA.length}  \u2022  B: ${classB.length}  \u2022  Total: ${total}`;
+    prediction.textContent = 'Click to place query';
+    prediction.className = '';
+    updateMetrics(null);
+  }
+
+  drawEntropyCurve();
+}
+
+/* ===== Update Metrics Panel ===== */
+function updateMetrics(r) {
+  if (!r || !queryPoint || classA.length + classB.length === 0) {
+    postBarA.style.width = '50%'; postBarB.style.width = '50%';
+    postVals.innerHTML = '<span>—</span><span>—</span>';
+    predClass.textContent = '—'; predClass.style.color = '';
+    confidence.textContent = '—';
+    postEntVal.textContent = '—'; igVal.textContent = '—'; igFill.style.width = '0%';
+    featureStats.innerHTML = '<div style="padding:4px 0">Click the canvas to compute posteriors.</div>';
+    return;
+  }
+
+  const { pA, pB, predicted, conf, likeA, likeB, stats } = r;
+  const priorH = binaryEntropy(priorProb);
+  const postH = (pA <= 0 || pA >= 1) ? 0 : binaryEntropy(pA);
+  const ig = priorH - postH;
+
+  postBarA.style.width = (pA * 100) + '%';
+  postBarB.style.width = (pB * 100) + '%';
+  postVals.innerHTML = `<span style="color:var(--classA)">P(A|X) = ${(pA * 100).toFixed(1)}%</span><span style="color:var(--classB)">P(B|X) = ${(pB * 100).toFixed(1)}%</span>`;
+  predClass.textContent = predicted;
+  predClass.style.color = predicted === 'A' ? 'var(--classA)' : 'var(--classB)';
+  confidence.textContent = (conf * 100).toFixed(1) + '%';
+  confidence.style.color = conf > 0.8 ? 'var(--success)' : conf > 0.6 ? 'var(--warn)' : 'var(--text3)';
+
+  postEntVal.textContent = postH.toFixed(3);
+  igVal.textContent = ig.toFixed(3);
+  igFill.style.width = Math.min(ig / priorH * 100, 100) + '%';
+
+  /* Feature likelihoods */
+  const statsA = stats.a, statsB = stats.b;
+  featureStats.innerHTML = `
+    <div class="feat-grid">
+      <div class="feat"><div>X mean</div><div class="fv">A: ${statsA.meanX.toFixed(0)} / B: ${statsB.meanX.toFixed(0)}</div></div>
+      <div class="feat"><div>Y mean</div><div class="fv">A: ${statsA.meanY.toFixed(0)} / B: ${statsB.meanY.toFixed(0)}</div></div>
+      <div class="feat"><div>X std</div><div class="fv">A: ${statsA.stdX.toFixed(1)} / B: ${statsB.stdX.toFixed(1)}</div></div>
+      <div class="feat"><div>Y std</div><div class="fv">A: ${statsA.stdY.toFixed(1)} / B: ${statsB.stdY.toFixed(1)}</div></div>
+      <div class="feat" style="grid-column:1/3"><div>Sample count</div><div class="fv">A: ${statsA.n} / B: ${statsB.n}</div></div>
+    </div>
+  `;
+}
+
+/* ===== Tooltip ===== */
+function findPoint(px, py, threshold) {
+  let best = null, bestD = threshold;
+  for (const p of classA) { const d = dist({x:px,y:py}, p); if (d < bestD) { bestD = d; best = { p, cls: 'A' }; } }
+  for (const p of classB) { const d = dist({x:px,y:py}, p); if (d < bestD) { bestD = d; best = { p, cls: 'B' }; } }
+  return best;
+}
+
+function showTooltip(text, x, y) { tooltip.textContent = text; tooltip.style.left = x + 14 + 'px'; tooltip.style.top = y - 6 + 'px'; tooltip.classList.add('v'); }
+function hideTooltip() { tooltip.classList.remove('v'); }
+
+/* ===== Events ===== */
+function handleMove(e) {
+  if (isDragging) return;
+  const c = getCoords(e);
+  const hit = findPoint(c.x, c.y, HOVER_R);
+  if (hit && queryPoint && dist(hit.p, queryPoint) < DRAG_TH) { hideTooltip(); hoveredPoint = null; return; }
+  if (hit) {
+    if (!hoveredPoint || hoveredPoint.p !== hit.p) { hoveredPoint = hit; draw(); }
+    showTooltip(`Class ${hit.cls} (${hit.p.x.toFixed(0)},${hit.p.y.toFixed(0)})`, e.clientX, e.clientY);
+  } else {
+    if (hoveredPoint) { hoveredPoint = null; draw(); }
+    hideTooltip();
+  }
+}
+
+function handleDown(e) {
+  const c = getCoords(e);
+  if (queryPoint && dist(c, queryPoint) < DRAG_TH) { isDragging = true; canvas.style.cursor = 'grabbing'; return; }
+  queryPoint = { x: c.x, y: c.y }; hoveredPoint = null; hideTooltip(); draw();
+}
+
+function handleDrag(e) {
+  if (!isDragging) return;
+  const c = getCoords(e); queryPoint = { x: c.x, y: c.y }; hoveredPoint = null; hideTooltip(); draw();
+}
+
+function handleUp() { if (isDragging) { isDragging = false; canvas.style.cursor = 'crosshair'; draw(); } }
+function handleLeave() { hideTooltip(); if (hoveredPoint) { hoveredPoint = null; draw(); } if (isDragging) { isDragging = false; canvas.style.cursor = 'crosshair'; } }
+
+canvas.addEventListener('mousedown', handleDown);
+canvas.addEventListener('mousemove', handleMove);
+canvas.addEventListener('mousemove', handleDrag);
+canvas.addEventListener('mouseup', handleUp);
+canvas.addEventListener('mouseleave', handleLeave);
+
+priorSlider.addEventListener('input', () => {
+  priorProb = parseInt(priorSlider.value) / 100;
+  priorVal.textContent = priorProb.toFixed(2);
+  draw();
+});
+
+genBtn.addEventListener('click', () => {
+  generatePattern(patternSelect.value);
+  queryPoint = null; hoveredPoint = null; hideTooltip(); draw();
+});
+
+patternSelect.addEventListener('change', () => {
+  generatePattern(patternSelect.value);
+  queryPoint = null; hoveredPoint = null; hideTooltip(); draw();
+});
+
+clearBtn.addEventListener('click', () => {
+  classA = []; classB = []; queryPoint = null; hoveredPoint = null; hideTooltip(); draw();
+});
+
+boundaryToggle.addEventListener('change', () => { showBoundary = boundaryToggle.checked; draw(); });
+contourToggle.addEventListener('change', () => { showContours = contourToggle.checked; draw(); });
+
+/* ===== Theme ===== */
+function applyTheme(t) {
+  currentTheme = t;
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('nb-theme', t);
+  themeToggle.textContent = t === 'dark' ? '\u2600' : '\u263E';
+  draw();
+}
+
+themeToggle.addEventListener('click', () => {
+  applyTheme((document.documentElement.getAttribute('data-theme') || 'dark') === 'dark' ? 'light' : 'dark');
+});
+
+/* ===== Keyboard ===== */
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  if (e.key === 'g' || e.key === 'G') { e.preventDefault(); genBtn.click(); }
+  if (e.key === 't' || e.key === 'T') { e.preventDefault(); themeToggle.click(); }
+});
+
+/* ===== Init ===== */
+const saved = localStorage.getItem('nb-theme') || 'dark';
+applyTheme(saved);
+generatePattern('random');
+draw();
+</script>
+</body>
+</html>
