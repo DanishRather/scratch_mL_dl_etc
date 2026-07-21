@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neural Network &mdash; Interactive Visualizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root,[data-theme="dark"]{--bg:#080c18;--surface:#111622;--surface2:#1a2032;--surface3:#222a40;--border:#283048;--text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;--classA:#ff6b6b;--classB:#4fc3f7;--accent:#7c5cfc;--accent2:#6a4be0;--success:#2dd4a0;--danger:#f87171;--warn:#fbbf24;--shadow:rgba(0,0,0,0.5);--cbg:#0f1625;--cborder:#283048}
+[data-theme="light"]{--bg:#f0f2f7;--surface:#fff;--surface2:#f4f6fb;--surface3:#e8ecf4;--border:#d0d6e0;--text:#161b2e;--text2:#4a5570;--text3:#8892b0;--classA:#e05252;--classB:#3498db;--accent:#6c4ce0;--accent2:#5a3dc4;--success:#2db488;--danger:#e05252;--warn:#d4a017;--shadow:rgba(0,0,0,0.08);--cbg:#fafbff;--cborder:#d0d6e0}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .35s,color .35s}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:0 0}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.app{display:flex;flex-direction:column;min-height:100vh;padding:14px 18px;animation:fadeIn .5s both}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+header{display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;margin-bottom:10px;border-bottom:1px solid var(--border)}
+.hl{display:flex;flex-direction:column}
+header h1{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;letter-spacing:-.3px}
+header h1 span{color:var(--accent)}
+header .sub{font-size:11px;color:var(--text3);margin-top:1px}
+.ha{display:flex;align-items:center;gap:10px}
+
+.toggle{width:36px;height:36px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .25s}
+.toggle:hover{background:var(--surface2);border-color:var(--accent);color:var(--accent);transform:rotate(15deg)}
+
+.row{display:grid;grid-template-columns:1.2fr 1.8fr 1.2fr;gap:14px;flex:1;min-height:0}
+
+.panel{background:var(--surface);border-radius:12px;padding:14px;border:1px solid var(--border);box-shadow:0 4px 20px var(--shadow);display:flex;flex-direction:column;animation:slide .45s both}
+@keyframes slide{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.pn:nth-child(1){animation-delay:.05s}
+.pn:nth-child(2){animation-delay:.1s}
+.pn:nth-child(3){animation-delay:.15s}
+.pl{overflow-y:auto;gap:4px}
+.pr{overflow-y:auto}
+
+.pt{font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.7px;flex-shrink:0}
+.pf{margin-top:auto;padding-top:6px;font-size:9px;color:var(--text3);text-align:center;border-top:1px solid var(--border)}
+
+.cc{flex:1;display:flex;flex-direction:column;align-items:center;min-width:0}
+
+.nn-details{width:100%;max-width:500px;margin-top:4px;font-size:10px;color:var(--text3);line-height:1.5;flex-shrink:0}
+.nn-details summary{cursor:pointer;font-weight:600;color:var(--text2);padding:3px 0;user-select:none;transition:color .2s}
+.nn-details summary:hover{color:var(--accent)}
+.nn-details[open] summary{color:var(--accent);margin-bottom:3px}
+
+@media(max-width:900px){
+  .row{grid-template-columns:1fr}
+  .app{padding:10px}
+  header h1{font-size:17px}
+}
+</style>
+<link rel="stylesheet" href="neural_network.css">
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="hl">
+      <h1>Neural <span>Network</span></h1>
+      <p class="sub">Forward Propagation &middot; Interactive Visualizer</p>
+    </div>
+    <div class="ha">
+      <button class="toggle" id="nnThemeToggle" title="Toggle theme">&#9790;</button>
+    </div>
+  </header>
+
+  <div class="row">
+    <!-- Left: Configuration -->
+    <div class="panel pl pn">
+      <div class="pt">Network Configuration</div>
+
+      <div class="nn-cfg-section">
+        <div class="nn-cfg-row">
+          <span class="nn-cfg-label">Inputs <small>(2-4)</small></span>
+          <div class="nn-cfg-controls">
+            <button class="nn-cfg-btn" id="nnInputDec">&minus;</button>
+            <span class="nn-cfg-val" id="nnInputVal">3</span>
+            <button class="nn-cfg-btn" id="nnInputInc">+</button>
+          </div>
+        </div>
+        <div class="nn-cfg-row">
+          <span class="nn-cfg-label">Hidden 1 <small>(0-6)</small></span>
+          <div class="nn-cfg-controls">
+            <button class="nn-cfg-btn" id="nnH1Dec">&minus;</button>
+            <span class="nn-cfg-val" id="nnH1Val">4</span>
+            <button class="nn-cfg-btn" id="nnH1Inc">+</button>
+          </div>
+        </div>
+        <div class="nn-cfg-row">
+          <span class="nn-cfg-label">Hidden 2 <small>(0-6)</small></span>
+          <div class="nn-cfg-controls">
+            <button class="nn-cfg-btn" id="nnH2Dec">&minus;</button>
+            <span class="nn-cfg-val" id="nnH2Val">0</span>
+            <button class="nn-cfg-btn" id="nnH2Inc">+</button>
+          </div>
+        </div>
+        <div class="nn-cfg-row">
+          <span class="nn-cfg-label">Outputs <small>(1-3)</small></span>
+          <div class="nn-cfg-controls">
+            <button class="nn-cfg-btn" id="nnOutDec">&minus;</button>
+            <span class="nn-cfg-val" id="nnOutVal">2</span>
+            <button class="nn-cfg-btn" id="nnOutInc">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="nn-cfg-section">
+        <div class="pt" style="font-size:10px;margin-bottom:5px;margin-top:2px">Input Values</div>
+        <div class="nn-input-row"><label>x1</label><input type="range" min="0" max="1" step="0.01" value="0.50"><span class="iv">0.50</span></div>
+        <div class="nn-input-row"><label>x2</label><input type="range" min="0" max="1" step="0.01" value="0.30"><span class="iv">0.30</span></div>
+        <div class="nn-input-row"><label>x3</label><input type="range" min="0" max="1" step="0.01" value="0.80"><span class="iv">0.80</span></div>
+        <div class="nn-input-row" style="display:none"><label>x4</label><input type="range" min="0" max="1" step="0.01" value="0.50"><span class="iv">0.50</span></div>
+      </div>
+
+      <div class="nn-cfg-section">
+        <div class="pt" style="font-size:10px;margin-bottom:5px;margin-top:2px">Activation</div>
+        <select class="nn-cfg-select" id="nnActSelect" style="width:100%">
+          <option value="sigmoid">Sigmoid</option>
+          <option value="relu">ReLU</option>
+          <option value="tanh">Tanh</option>
+        </select>
+        <div class="nn-act-curve-wrap"><canvas id="nnActCurve" width="150" height="80"></canvas></div>
+      </div>
+
+      <div class="nn-cfg-section">
+        <div class="pt" style="font-size:10px;margin-bottom:5px;margin-top:2px">Actions</div>
+        <div class="nn-actions">
+          <button class="primary" id="nnRunBtn">&#9654; Run Forward Pass</button>
+          <button id="nnRandomBtn">&#9861; Randomize</button>
+          <button class="danger" id="nnResetBtn">&#8634; Reset</button>
+        </div>
+      </div>
+
+      <div class="pf">Click a connection to edit its weight</div>
+    </div>
+
+    <!-- Center: Canvas -->
+    <div class="cc pn">
+      <div class="nn-canvas-wrapper"><canvas id="nnCanvas" width="500" height="400"></canvas></div>
+      <div id="nnWeightPopup"></div>
+
+      <div class="nn-legend">
+        <span class="nn-legend-item"><span class="nn-legend-line pos"></span> Positive</span>
+        <span class="nn-legend-item"><span class="nn-legend-line neg"></span> Negative</span>
+        <span class="nn-legend-item"><span class="nn-legend-dot inactive"></span> Inactive</span>
+        <span class="nn-legend-item"><span class="nn-legend-dot active"></span> Active</span>
+      </div>
+
+      <details class="nn-details">
+        <summary>How Forward Propagation Works</summary>
+        <p>Each neuron receives weighted signals from all neurons in the previous layer, sums them with its bias, then applies an activation function to produce its output. The animation shows this computation flowing layer by layer &mdash; watch the traveling dots on the connections and the neurons lighting up as values propagate through the network. Thicker, bluer lines carry stronger positive signals; redder lines carry negative signals. Click any connection to edit its weight.</p>
+      </details>
+    </div>
+
+    <!-- Right: Computation -->
+    <div class="panel pr pn">
+      <div class="pt">Computation Details</div>
+      <div id="nnCompPanel" style="font-size:9px;color:var(--text3);line-height:1.5;overflow-y:auto">
+        <div style="padding:10px 0;text-align:center">Press <strong>&#9654; Run Forward Pass</strong> to see the computation unfold layer by layer.</div>
+      </div>
+      <div class="pf">Each neuron: z = &Sigma;(w&times;input) + bias, then a(z)</div>
+    </div>
+  </div>
+</div>
+
+<script src="neural_network.js"></script>
+</body>
+</html>

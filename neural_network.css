@@ -1,0 +1,85 @@
+/* ===== Neural Network Visualizer — Component Styles (nn- prefix) ===== */
+
+/* --- Network canvas --- */
+.nn-canvas-wrapper{display:flex;justify-content:center;margin-bottom:6px;width:100%;position:relative;flex-shrink:0}
+#nnCanvas{border:1.5px solid var(--cborder);border-radius:10px;cursor:pointer;background:var(--cbg);display:block;max-width:100%;height:auto;box-shadow:0 4px 18px var(--shadow)}
+
+/* --- Weight tooltip --- */
+#nnWeightPopup{position:fixed;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:10px;color:var(--text);box-shadow:0 6px 24px var(--shadow);z-index:200;display:none;min-width:120px}
+#nnWeightPopup .wp-label{font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px}
+#nnWeightPopup input{width:100%;padding:3px 5px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:4px;font-size:10px;font-family:'JetBrains Mono',monospace;outline:none}
+#nnWeightPopup input:focus{border-color:var(--accent)}
+
+/* --- Configuration panel --- */
+.nn-cfg-section{margin-bottom:10px}
+.nn-cfg-section:last-child{margin-bottom:0}
+
+.nn-cfg-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid var(--border);gap:6px}
+.nn-cfg-row:last-child{border-bottom:none}
+.nn-cfg-label{font-size:10px;color:var(--text2);font-weight:500}
+.nn-cfg-label small{color:var(--text3);font-weight:400}
+
+.nn-cfg-controls{display:flex;align-items:center;gap:4px}
+.nn-cfg-btn{width:22px;height:22px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;line-height:1;padding:0}
+.nn-cfg-btn:hover{background:var(--surface3);border-color:var(--accent);color:var(--accent)}
+.nn-cfg-btn:active{transform:scale(.92)}
+.nn-cfg-val{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--text);min-width:18px;text-align:center}
+
+.nn-cfg-select{padding:3px 6px;background:var(--surface2);color:var(--text2);border:1px solid var(--border);border-radius:6px;font-size:10px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s}
+.nn-cfg-select:hover{border-color:var(--accent);color:var(--text)}
+
+.nn-cfg-btn-group{display:flex;gap:4px;flex-wrap:wrap}
+.nn-cfg-btn-group button{padding:3px 8px;background:var(--surface2);color:var(--text2);border:1px solid var(--border);border-radius:6px;font-size:9px;font-weight:500;cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif}
+.nn-cfg-btn-group button:hover{background:var(--surface3);border-color:var(--accent);color:var(--text)}
+.nn-cfg-btn-group button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* --- Input sliders --- */
+.nn-input-row{display:flex;align-items:center;gap:6px;padding:2px 0}
+.nn-input-row label{font-size:10px;font-weight:600;color:var(--text2);min-width:50px;font-family:'JetBrains Mono',monospace}
+.nn-input-row input[type=range]{flex:1;height:3px;accent-color:var(--accent);cursor:pointer}
+.nn-input-row .iv{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--text);min-width:30px;text-align:right}
+
+/* --- Action buttons --- */
+.nn-actions{display:flex;gap:5px;flex-wrap:wrap}
+.nn-actions button{padding:5px 12px;background:var(--surface2);color:var(--text2);border:1px solid var(--border);border-radius:7px;font-size:10px;font-weight:500;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+.nn-actions button:hover{background:var(--surface3);border-color:var(--accent);color:var(--text);transform:translateY(-1px);box-shadow:0 2px 6px var(--shadow)}
+.nn-actions button.primary{border-color:var(--accent);color:var(--accent)}
+.nn-actions button.primary:hover{background:rgba(124,92,252,.12)}
+.nn-actions button.primary:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+.nn-actions button.danger{border-color:var(--danger);color:var(--danger)}
+.nn-actions button.danger:hover{background:rgba(248,113,113,.1)}
+
+/* --- Activation mini-graph --- */
+.nn-act-graph-wrap{display:flex;justify-content:center;margin:4px 0}
+#nnActGraph{display:block;border-radius:5px;background:var(--surface2);width:100%;max-width:160px;height:auto}
+
+/* --- Computation panel --- */
+.nn-comp-section{margin-bottom:8px}
+.nn-comp-section:last-child{margin-bottom:0}
+
+.nn-layer-group{margin-bottom:6px}
+.nn-layer-group:last-child{margin-bottom:0}
+.nn-layer-label{font-size:8.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px}
+
+.nn-neuron-detail{padding:3px 5px;background:var(--surface2);border-radius:5px;margin-bottom:2px;font-size:8.5px;color:var(--text3);line-height:1.5;transition:background .3s}
+.nn-neuron-detail.active{background:rgba(124,92,252,.1);border-left:2px solid var(--accent)}
+.nn-neuron-detail .nd-name{font-weight:600;color:var(--text2);font-family:'JetBrains Mono',monospace;font-size:8px}
+.nn-neuron-detail .nd-val{font-weight:700;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:9px}
+.nn-neuron-detail .nd-formula{color:var(--text3);font-size:8px;font-family:'JetBrains Mono',monospace;line-height:1.4;margin-top:1px}
+.nn-neuron-detail .nd-act{color:var(--accent)}
+.nn-neuron-detail .nd-weight{color:var(--classB)}
+.nn-neuron-detail .nd-weight.neg{color:var(--classA)}
+
+/* --- Legend --- */
+.nn-legend{display:flex;justify-content:center;gap:16px;margin-bottom:4px;font-size:10px;color:var(--text3);flex-shrink:0;flex-wrap:wrap}
+.nn-legend-item{display:flex;align-items:center;gap:4px}
+.nn-legend-line{width:16px;height:3px;border-radius:2px}
+.nn-legend-line.pos{background:#4fc3f7}
+.nn-legend-line.neg{background:#ff6b6b}
+.nn-legend-dot{width:8px;height:8px;border-radius:50%}
+.nn-legend-dot.inactive{background:var(--surface3);border:1px solid var(--border)}
+.nn-legend-dot.active{background:var(--accent);box-shadow:0 0 6px var(--accent)}
+
+/* --- Activation curve mini canvas --- */
+.nn-act-curve-wrap{display:flex;justify-content:center;margin:4px 0}
+#nnActCurve{display:block;border-radius:5px;background:var(--surface2);width:100%;max-width:150px;height:auto}
